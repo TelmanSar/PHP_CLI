@@ -63,7 +63,6 @@ function export()
         $table_schema_string = mysqli_fetch_array($table_schema_resource, MYSQLI_BOTH)[1];
         $tables_structure_array[] = $table_schema_string;
     }
-    echo $argv[3];
     //Check if fileName is specified or not
     if ((isset($argv[4])) || (isset($argv[3]) && $argv[3] !== "*" && strpos($argv[3], '.') !== false)) {
         $file_name = $argv[4] ?? $argv[3];
@@ -88,7 +87,37 @@ function export()
     fclose($dump_file);
     mysqli_close($link);
 }
-function import() {
+function import()
+{
     global $argv;
-    global $argc;
+    try {
+        if (isset($argv[2]) === false) {
+            throw new Exception("Database name is not specified");
+        }
+        $database_name = $argv[2];
+    } catch (Exception $e) {
+        die("ERROR: " . $e->getMessage() . "\n");
+    }
+    $link = mysqli_connect("localhost", "root", "1234");
+    if ($link === false) {
+        die("ERROR: Could not connect. " . mysqli_connect_error() . "\n");
+    }
+    if (mysqli_query($link, "USE $database_name") === false) {
+        die("ERROR: Could not able to execute USE $database_name " . mysqli_error($link) . "\n");
+    }
+    if (isset($argv[3])) {
+        $file_name = $argv[3];
+        //Check if filename has right file extension (ends with ".sql")
+        if (preg_match('/[\w].sql$/', $file_name) !== 1) {
+            die("ERROR: wrong file extension");
+        }
+    } else {
+        die("ERROR: You didn't specify any file name for import");
+    }
+    $string_of_queries_to_be_executed = file_get_contents($file_name);
+    mysqli_query($link, "DROP DATABASE IF EXISTS $database_name");
+    mysqli_query($link, "CREATE DATABASE $database_name");
+    mysqli_query($link, "USE $database_name");
+    mysqli_multi_query($link, $string_of_queries_to_be_executed);
+    mysqli_close($link);
 }
