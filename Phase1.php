@@ -1,10 +1,11 @@
 <?php
-//make argv[1] case insensitive,
 //check if any arguments passed during call of script
 if ($argc > 1) {
     //if second argument is export, run export function
-    if ($argv[1] === "export") {
+    if (strtolower($argv[1]) === "export") {
         export();
+    } elseif (strtolower($argv[1]) === "import") {
+        import();
     }
 } else {
     die("You didn't pass any arguments. Please specify arguments.\n");
@@ -33,7 +34,7 @@ function export()
         die("ERROR: Could not able to execute USE $database_name " . mysqli_error($link) . "\n");
     }
     //check the names of tables: specified or must choose all of them
-    if ($argv[3] === '*' || isset($argv[3]) === false ||($argc === 4 && strpos($argv[3], '.') !== false)) {
+    if ($argv[3] === '*' || isset($argv[3]) === false || ($argc === 4 && strpos($argv[3], '.') !== false)) {
         if (mysqli_query($link, "SHOW TABLES")) {
             $table_names_resource = mysqli_query($link, "SHOW TABLES");
             //create table names array
@@ -62,27 +63,32 @@ function export()
         $table_schema_string = mysqli_fetch_array($table_schema_resource, MYSQLI_BOTH)[1];
         $tables_structure_array[] = $table_schema_string;
     }
+    echo $argv[3];
     //Check if fileName is specified or not
-    if ((isset($argv[4]) && $argv[4] !== "*") || (isset($argv[3]) && strpos($argv[3], '.') !== false)) {
+    if ((isset($argv[4])) || (isset($argv[3]) && $argv[3] !== "*" && strpos($argv[3], '.') !== false)) {
         $file_name = $argv[4] ?? $argv[3];
         //Check if filename has right file extension (ends with ".sql")
         if (preg_match('/[\w].sql$/', $file_name) !== 1) {
             die("ERROR: wrong file extension");
         }
     } else {
-        $file_name = "dump-".date('Y\-m\-d\-H:i:s').".sql";
+        $file_name = "dump-" . date('Y\-m\-d\-H:i:s') . ".sql";
     }
     $dump_file = fopen($file_name, "w");
-    fwrite($dump_file,"CREATE DATABASE IF NOT EXISTS $database_name;");
-    fwrite($dump_file,"\n");
-    fwrite($dump_file,"USE $database_name;");
-    fwrite($dump_file,"\n");
-    for($i = 0; $i < count($tables_structure_array); $i++) {
-        fwrite($dump_file,"DROP TABLE IF EXISTS $table_names_array[$i];\n");
-        fwrite($dump_file,"\n");
-        fwrite($dump_file,$tables_structure_array[$i].";\n");
-        fwrite($dump_file,"\n");
+    fwrite($dump_file, "CREATE DATABASE IF NOT EXISTS $database_name;");
+    fwrite($dump_file, "\n");
+    fwrite($dump_file, "USE $database_name;");
+    fwrite($dump_file, "\n");
+    for ($i = 0; $i < count($tables_structure_array); $i++) {
+        fwrite($dump_file, "DROP TABLE IF EXISTS $table_names_array[$i];\n");
+        fwrite($dump_file, "\n");
+        fwrite($dump_file, $tables_structure_array[$i] . ";\n");
+        fwrite($dump_file, "\n");
     }
     fclose($dump_file);
     mysqli_close($link);
+}
+function import() {
+    global $argv;
+    global $argc;
 }
