@@ -75,34 +75,41 @@ function validate_arguments($parsed_args)
     } else {
         $validated_args["host"] = $parsed_args["host"];
     }
+
     if (!isset($parsed_args["user"])) {
         $validated_args["user"] = "root";
     } else {
         $validated_args["user"] = $parsed_args["user"];
     }
+
     if (!isset($parsed_args["password"])) {
         $validated_args["password"] = "1234";
     } else {
         $validated_args["password"] = $parsed_args["password"];
     }
+
     if (!isset($parsed_args["command"])) {
         throw new Exception("You did not pass any command.");
     }
     $validated_args["command"] = check_and_get_command($parsed_args["command"]);
-    if (!isset($parsed_args["database"])) {
+
+    if ( ($validated_args["command"] === "export_data" || $validated_args["command"] === "export_structure") && !isset($parsed_args["database"])) {
         throw new Exception("You did not pass any database.");
-    };
+    }
     $validated_args["database"] = check_and_get_database($parsed_args["database"]);
+
     if (($validated_args["command"] === "export_data" || $validated_args["command"] === "export_structure") && (!isset($parsed_args["tables"]) || $parsed_args["tables"] === '*') ) {
         $validated_args["tables"] = "*";
     } else {
         $validated_args["tables"] = check_and_get_table_names($parsed_args["tables"]);
     }
+
     if ( ($validated_args["command"] === "export_data" || $validated_args["command"] === "export_structure") && !isset($parsed_args["file"])) {
         $validated_args["file"] = generate_file_name();
     } elseif ($validated_args["command"] === "import" && !isset($parsed_args["file"])) {
         throw new Exception("Please specify file for Import");
     }
+
     else {
         $validated_args["file"] = check_and_get_file_name($parsed_args["file"]);
     }
